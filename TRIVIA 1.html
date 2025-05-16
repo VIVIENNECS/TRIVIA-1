@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trivia Escolar</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #1e3c72, #2a5298);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      width: 90%;
+      max-width: 600px;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      position: relative;
+    }
+    .timer {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 1.2rem;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+    .question-img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .question {
+      font-size: 1.2rem;
+      margin: 10px 0;
+      font-weight: bold;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .option {
+      background-color: #ffffff30;
+      border: none;
+      border-radius: 5px;
+      padding: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      color: white;
+    }
+    .option.correct {
+      background-color: #4caf50 !important;
+      position: relative;
+    }
+    .option.correct::after {
+      content: "🏅";
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.2rem;
+    }
+    .option.incorrect {
+      background-color: #f44336 !important;
+    }
+    .option:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    .next-btn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      background-color: #1976d2;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      display: none;
+    }
+    .result {
+      font-size: 1.4rem;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container animate__animated animate__fadeIn">
+    <div class="timer" id="timer">00:00</div>
+    <img id="question-img" class="question-img" src="" alt="Imagen de la pregunta">
+    <div id="question" class="question"></div>
+    <div id="options" class="options"></div>
+    <button id="nextBtn" class="next-btn">Siguiente</button>
+    <div id="result" class="result"></div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        question: "¿Cuál es el planeta más cercano al Sol?",
+        image: "https://upload.wikimedia.org/wikipedia/commons/4/4a/Mercury_in_true_color.jpg",
+        options: ["Mercurio", "Venus", "Tierra", "Marte"],
+        answer: "Mercurio"
+      },
+      {
+        question: "¿Quién escribió 'Cien años de soledad'?",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Gabriel_Garcia_Marquez_1984.jpg/800px-Gabriel_Garcia_Marquez_1984.jpg",
+        options: ["Mario Vargas Llosa", "Gabriel García Márquez", "Pablo Neruda", "Julio Cortázar"],
+        answer: "Gabriel García Márquez"
+      },
+      {
+        question: "¿Cuál es la capital de Australia?",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Canberra_from_Mount_Ainslie.jpg/800px-Canberra_from_Mount_Ainslie.jpg",
+        options: ["Sídney", "Melbourne", "Canberra", "Brisbane"],
+        answer: "Canberra"
+      },
+      {
+        question: "¿Qué elemento químico tiene el símbolo O?",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Oxygen_discharge_tube.jpg/800px-Oxygen_discharge_tube.jpg",
+        options: ["Oro", "Osmio", "Oxígeno", "Oganesón"],
+        answer: "Oxígeno"
+      },
+      {
+        question: "¿Qué instrumento tiene teclas y cuerdas?",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Grand_piano_Concertgebouw.jpg/800px-Grand_piano_Concertgebouw.jpg",
+        options: ["Violín", "Piano", "Guitarra", "Flauta"],
+        answer: "Piano"
+      },
+      {
+        question: "¿Cuántos continentes hay en el mundo?",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/World_map_blank_without_borders.svg/800px-World_map_blank_without_borders.svg.png",
+        options: ["5", "6", "7", "8"],
+        answer: "7"
+      },
+      {
+        question: "¿Cuál es el río más largo del mundo?",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Amazon_river.jpg/800px-Amazon_river.jpg",
+        options: ["Nilo", "Amazonas", "Yangtsé", "Misisipi"],
+        answer: "Amazonas"
+      },
+      {
+        question: "¿Quién pintó la Mona Lisa?",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/800px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg",
+        options: ["Miguel Ángel", "Leonardo da Vinci", "Rafael", "Donatello"],
+        answer: "Leonardo da Vinci"
+      },
+      {
+        question: "¿Cuál es el océano más grande del planeta?",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Pacific_Ocean_-_en.svg/800px-Pacific_Ocean_-_en.svg.png",
+        options: ["Atlántico", "Índico", "Ártico", "Pacífico"],
+        answer: "Pacífico"
+      },
+      {
+        question: "¿Qué gas respiramos que es vital para la vida?",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Oxygen_discharge_tube.jpg/800px-Oxygen_discharge_tube.jpg",
+        options: ["Nitrógeno", "Oxígeno", "Dióxido de carbono", "Hidrógeno"],
+        answer: "Oxígeno"
+      },
+      {
+        question: "¿En qué país se originaron los Juegos Olímpicos?",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Olympic_rings_without_rims.svg/640px-Olympic_rings_without_rims.svg.png",
+        options: ["Italia", "Grecia", "Francia", "Inglaterra"],
+        answer: "Grecia"
+      },
+      {
+        question: "¿Cuál es el animal terrestre más grande?",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/African_Bush_Elephant.jpg/800px-African_Bush_Elephant.jpg",
+        options: ["Rinoceronte", "Elefante africano", "Jirafa", "Hipopótamo"],
+        answer: "Elefante africano"
+      },
+      {
+        question: "¿Cuál es el metal más ligero?",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Lithium_paraffin.jpg/800px-Lithium_paraffin.jpg",
+        options: ["Litio", "Aluminio", "Hierro", "Titanio"],
+        answer: "Litio"
+      },
+      {
+        question: "¿Qué día se celebra la independencia de México?",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Flag_of_Mexico.svg/800px-Flag_of_Mexico.svg.png",
+        options: ["5 de mayo", "20 de noviembre", "16 de septiembre", "15 de septiembre"],
+        answer: "16 de septiembre"
+      },
+      {
+        question: "¿Qué órgano del cuerpo humano bombea sangre?",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Diagram_of_the_human_heart_%28cropped%29.svg/800px-Diagram_of_the_human_heart_%28cropped%29.svg.png",
+        options: ["Pulmones", "Hígado", "Riñones", "Corazón"],
+        answer: "Corazón"
+      }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let seconds = 0;
+    let timerInterval;
+
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const nextBtn = document.getElementById('nextBtn');
+    const resultEl = document.getElementById('result');
+    const imgEl = document.getElementById('question-img');
+    const timerEl = document.getElementById('timer');
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        seconds++;
+        const min = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const sec = String(seconds % 60).padStart(2, '0');
+        timerEl.textContent = `${min}:${sec}`;
+        if (seconds >= 300) { // 5 minutos
+          stopTimer();
+          showResult();
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+    }
+
+    function showQuestion(index) {
+      const q = questions[index];
+      questionEl.innerHTML = `<strong>${q.question}</strong>`;
+      imgEl.src = q.image;
+      optionsEl.innerHTML = '';
+      nextBtn.style.display = 'none';
+      q.options.forEach(option => {
+        const btn = document.createElement('button');
+        btn.className = 'option';
+        btn.textContent = option;
+        btn.onclick = () => selectAnswer(btn, q.answer);
+        optionsEl.appendChild(btn);
+      });
+    }
+
+    function selectAnswer(btn, correctAnswer) {
+      const buttons = document.querySelectorAll('.option');
+      buttons.forEach(b => {
+        b.disabled = true;
+        if (b.textContent === correctAnswer) {
+          b.classList.add('correct');
+        } else if (b === btn) {
+          b.classList.add('incorrect');
+        }
+      });
+      if (btn.textContent === correctAnswer) score++;
+      nextBtn.style.display = 'inline-block';
+    }
+
+    nextBtn.addEventListener('click', () => {
+      currentQuestion++;
+      if (currentQuestion < questions.length) {
+        showQuestion(currentQuestion);
+      } else {
+        stopTimer();
+        showResult();
+      }
+    });
+
+    function showResult() {
+      questionEl.style.display = 'none';
+      optionsEl.style.display = 'none';
+      imgEl.style.display = 'none';
+      nextBtn.style.display = 'none';
+
+      let feedback = '';
+      if (score === 15) {
+        feedback = '¡Perfecto! Eres un genio del conocimiento general.';
+      } else if (score >= 12) {
+        feedback = '¡Muy bien! Tienes una gran base de conocimientos.';
+      } else if (score >= 8) {
+        feedback = '¡Bien hecho! Pero puedes seguir aprendiendo más.';
+      } else {
+        feedback = '¡Ánimo! Sigue estudiando y mejorarás con práctica.';
+      }
+
+      resultEl.innerHTML = `Obtuviste ${score} de 15 respuestas correctas.<br>${feedback}<br>Tiempo total: ${timerEl.textContent}`;
+    }
+
+    showQuestion(currentQuestion);
+    startTimer();
+  </script>
+</body>
+</html>
